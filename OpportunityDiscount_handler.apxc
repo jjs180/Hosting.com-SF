@@ -1,0 +1,30 @@
+public class OpportunityDiscount_handler {
+
+    public static void processDiscounts(List<Opportunity> newOppList, Map<Id,Opportunity> oldOppMap){
+        Set<Id> oppIdSet = new Set<Id>();
+        for(Opportunity o: newOppList){
+            if( (o.MRC_Discount_Percent__c != oldOppMap.get(o.Id).MRC_Discount_Percent__c) ||
+               (o.NRC_Discount_Percent__c != oldOppMap.get(o.Id).NRC_Discount_Percent__c) ){ //Discounts have changed
+            	oppIdSet.add(o.Id);
+        	}
+        }
+        if(oppIdSet.size() > 0){
+            Set<Id> pcIdSet = new Set<Id>(); 
+            for(cscfga__Product_Configuration__c PC: [SELECT Id 
+    		FROM cscfga__Product_Configuration__c 
+    		WHERE cscfga__Product_Basket__r.cscfga__Opportunity__c IN:oppIdSet ]){
+                pcIdSet.add(PC.Id); //Add all the related Prod config records to the set
+            }
+            if(pcIdset.size() > 0){ //If there are any Prod Config records, run the re-validate process on them
+                cscfga.AEventHandler hndlr = new CustomDiscountAEventHandler();
+				cscfga.ProductConfigurationBulkActions.revalidateConfigurationsAsync(pcIdSet, hndlr);
+				
+                //current process requires 2 calls to run properly---can be eliminated when the process is
+                //updated to only require one call to the revalidate process
+				cscfga.AEventHandler hndlr2 = new CustomDiscountAEventHandler();
+				cscfga.ProductConfigurationBulkActions.revalidateConfigurationsAsync(pcIdSet, hndlr2);
+            }
+        }
+    }
+    
+}

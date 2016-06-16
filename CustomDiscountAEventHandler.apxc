@@ -1,0 +1,23 @@
+public class CustomDiscountAEventHandler extends cscfga.AEventHandler{
+
+    public override void handleEvent(String eventName, Object payload) {
+        if (eventName == 'revalidateConfigurations_finished') {
+            updateConfigDiscounts((Map<String, Object>) payload);
+        }
+    }
+
+    public override Type getClass() {
+        return CustomDiscountAEventHandler.class;
+    }
+
+    private void updateConfigDiscounts(Map<String, Object> payload) {
+        System.assert(payload.keySet().contains('sourceConfigurations'));
+
+        List<cscfga__Product_Configuration__c> pcList = new List<cscfga__Product_Configuration__c>();
+        Set<Id> configurationIds = (Set<Id>) payload.get('sourceConfigurations');        
+        pcList = [SELECT id from cscfga__Product_Configuration__c where id in :configurationIds];
+
+        update pcList;
+        update pcList;
+    }
+}
